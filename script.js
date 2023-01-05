@@ -1,64 +1,96 @@
-const bar = document.getElementById('bar');
-const click = document.getElementById('click');
-const scroll = document.getElementById('scroll');
-const start = document.getElementById('start');
-const menu = document.getElementById('menu');
+window.addEventListener("click", function() {
+        document.getElementById("start").style.opacity != '0'? Start(): Unlock();
+})
 
-var clickSide = click.getBoundingClientRect();
-var scrollSide = scroll.getBoundingClientRect();
+window.addEventListener("keydown", keyDown = (key) => {
+    if (key.code == 'Space') document.getElementById("start").style.opacity != '0'? Start(): Unlock();
+})
 
-let barWidth = bar.clientWidth
-let barSide = bar.getBoundingClientRect();
-
-let min = barSide.left;
-let max =  barSide.right;
-
-let Score = 0;
-
-window.addEventListener("keydown", keyDown = (event) => {
-    if(event.code == 'Space') {
-        Pop()
-    }     
-  });
-
-Click = () => {
-    let clickCenter = clickSide.left + (clickSide.width / 2);
-    let rand = `${Math.round(Math.random() * barWidth)-(clickSide.width/2)}px`
-    click.style.left = rand;
-    click.style.width = `${10 -Score}%`
-    clickSide = click.getBoundingClientRect();
-} 
-
-Scroll = () => {
-    let rand = `${Math.round(Math.random() * barWidth)}px`
-    scroll.style.left = rand;
-    let dir = 1
-    setInterval(function(){
-        scroll.style.left = `${Number(scroll.offsetLeft) + dir * Math.min(Score + 1, 4)}px`
-        if ((dir == 1)&&(scrollSide.right > max)) {
-            dir = -1
-        } else if  ((dir == -1)&&(scrollSide.left < min)) {
-            dir = 1
-        }
-        scrollSide = scroll.getBoundingClientRect();
-    }, 60/1000);
+function Start() {
+    document.getElementById("start").style.opacity = '0';
+    Game()
 }
 
-Pop = () => {
-    if ((scrollSide.left < clickSide.left)||(scrollSide.right > clickSide.right)) {
-        location.reload();
-    } else {
-     Click()
-     Score++
-     if (Score == 10) {
-         console.log('win')
-     }}}
+function Game() {
 
-     start.addEventListener("click", myFunction = () => {
-        menu.style.display = 'none'
-     });
+    class Object {
+        constructor(element) {
+            this.element = element;  
+            this.left = element.getBoundingClientRect().left;
+            this.right = element.getBoundingClientRect().right;
+            this.width = element.getBoundingClientRect().width;
+          }
 
-Click()
-Scroll()
+          center() {
+            return this.width / 2;
+          }
+    }
 
+    let Score = 0;
+    
+    const track = new Object (document.getElementById('track'));
+    const lock = new Object (document.getElementById('lock'));
+    const key = new Object (document.getElementById('key'));
 
+    function Generate() {
+
+        Key()
+        Lock()
+
+        document.getElementById('score').textContent = Score;
+        let dir = 1
+
+        function Lock() {
+
+            lock.element.style.width = `${Math.max(15 - Score,2)}%`;
+            let rand = `${Math.round(Math.min(Math.random() * 100, 100 - parseFloat(lock.element.style.width)))}%`
+            console.log(parseFloat(lock.element.style.width)/100)
+            lock.element.style.left = rand;
+            lock.element.style.opacity = '1';
+            lock.left = lock.element.getBoundingClientRect().left;
+            lock.right = lock.element.getBoundingClientRect().right;
+        }
+
+        function Key() {
+
+            key.element.style.opacity = '1';
+            key.element.style.filter = 'invert(1)';
+            key.element.style.mixBlendMode = 'difference';
+
+            let Timer = function(){
+                key.left = key.element.getBoundingClientRect().left;
+                key.right = key.element.getBoundingClientRect().right;
+                key.element.style.left = `${Number(key.element.offsetLeft) + (dir * 2)}px`;
+                if ((dir == 1)&&(key.right >= track.right)) {
+                    dir = -1
+                } else if  ((dir == -1)&&(key.left <= track.left)) {
+                    dir = 1
+                }
+            }
+
+            let myTimer = window.setInterval(Timer, 60/1000);
+
+            function ResetTimer() {
+                window.clearInterval(myTimer);
+                myTimer = window.setInterval(Timer, 60/1000);
+            }
+     
+            Unlock = () => {
+                if ((key.left < lock.left)||(key.right > lock.right)) {
+                    window.clearInterval(myTimer);
+                    document.getElementById("start").style.opacity = '1';
+                } else {
+                    ResetTimer();
+                    Lock();
+                    Score++
+                    document.getElementById('score').textContent = Score;
+                }
+            }
+ 
+    }
+
+}
+
+Generate()
+
+}
